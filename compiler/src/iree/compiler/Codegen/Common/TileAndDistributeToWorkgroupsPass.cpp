@@ -38,7 +38,7 @@
 #include "mlir/Dialect/Utils/StaticValueUtils.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
-
+#include <iostream>
 #define DEBUG_TYPE "iree-codegen-tile-and-distribute-to-workgroups"
 
 namespace mlir {
@@ -303,6 +303,7 @@ struct TileAndDistributeToWorkgroupsPass
 }  // namespace
 
 void TileAndDistributeToWorkgroupsPass::runOnOperation() {
+  std::cout << "Yufan:: [TileAndDistributeToWorkgroupsPass] " << std::endl;
   MLIRContext *context = &getContext();
   IREE::HAL::ExecutableVariantOp variantOp = getOperation();
   ModuleOp innerModule = variantOp.getInnerModule();
@@ -319,12 +320,15 @@ void TileAndDistributeToWorkgroupsPass::runOnOperation() {
       funcOp.emitOpError("failed to get compute ops in dispatch");
       return signalPassFailure();
     }
+    std::cout << "Yufan:: [TileAndDistributeToWorkgroupsPass] tiledLoops.empty() " << tiledLoops.empty() << std::endl;
     if (!tiledLoops.empty()) {
       // The entry point already has distribution to workgroups. Do nothing.
       continue;
     }
+    
     SmallVector<int64_t> tileSizes, staticLoopRanges, interchange;
     SmallVector<unsigned> partitionableLoops;
+
     Operation *dispatchRootOp = nullptr;
     if (failed(getTileAndDistributeConfig(computeOps, dispatchRootOp, tileSizes,
                                           staticLoopRanges, interchange,
@@ -410,6 +414,27 @@ void TileAndDistributeToWorkgroupsPass::runOnOperation() {
       funcOp.print(llvm::dbgs(), OpPrintingFlags().useLocalScope());
       llvm::dbgs() << "\n\n";
     });
+
+////// Yufan retest tiling
+    if (failed(getComputeOps(funcOp, computeOps, tiledLoops))) {
+        funcOp.emitOpError("failed to get compute ops in dispatch");
+        return signalPassFailure();
+    }
+    std::cout << "Yufan:: Again [TileAndDistributeToWorkgroupsPass] tiledLoops.empty() " << tiledLoops.empty() << std::endl;
+    std::cout << "ts " << tileSizes.size()  << std::endl;
+    for (auto ts : tileSizes){
+      std::cout << ts << std::endl;
+    }
+    if (!tiledLoops.empty()) {
+      // The entry point already has distribution to workgroups. Do nothing.
+      for (LoopTilingAndDistributionInfo ltdi : tiledLoops){
+        std::cout << "Yufan:: tiled Loop " << ltdi.loop->getName().getStringRef().str() << std::endl;
+        std::cout << "Yufan:: tiled Loop info " << ltdi.loop->getRegisteredInfo()->getStringRef().str() << std::endl;
+        std::cout << "Yufan:: tiled size " << ltdi.tileSize.value()<< std::endl;
+      }
+      continue;
+    }
+
 
     {
       // Apply linalg tiling optimization patterns, which includes folding

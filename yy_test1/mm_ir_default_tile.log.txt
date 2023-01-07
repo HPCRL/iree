@@ -1,4 +1,18 @@
 //----> Yufan woof woof ----->
+Yufan:: [setRootConfig contraction] 3
+Yufan:: [TileAndDistributeToWorkgroupsPass] 
+Yufan:: [TileAndDistributeToWorkgroupsPass] tiledLoops.empty() 1
+Yufan:: Again [TileAndDistributeToWorkgroupsPass] tiledLoops.empty() 0
+ts 3
+256
+128
+0
+Yufan:: tiled Loop scf.for
+Yufan:: tiled Loop info scf.for
+Yufan:: tiled size 256
+Yufan:: tiled Loop scf.for
+Yufan:: tiled Loop info scf.for
+Yufan:: tiled size 128
 // -----// IR Dump After TileAndDistributeToWorkgroups (iree-codegen-tile-and-distribute-to-workgroups) //----- //
 hal.executable.variant public @embedded_elf_x86_64, target = <"llvm-cpu", "embedded-elf-x86_64", {cpu_features = "", data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128", native_vector_size = 16 : index, target_triple = "x86_64-unknown-unknown-eabi-elf"}> {
   hal.executable.export public @matmul_static_dispatch_0_matmul_512x1024x256 ordinal(0) layout(#hal.pipeline.layout<push_constants = 6, sets = [<0, bindings = [<0, storage_buffer>, <1, storage_buffer>, <2, storage_buffer>]>]>) attributes {translation_info = #iree_codegen.translation_info<CPUDoubleTilingPadExpert>} {
@@ -10,8 +24,6 @@ hal.executable.variant public @embedded_elf_x86_64, target = <"llvm-cpu", "embed
   }
   builtin.module {
     func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
-      %c256 = arith.constant 256 : index
-      %c128 = arith.constant 128 : index
       %c512 = arith.constant 512 : index
       %c1024 = arith.constant 1024 : index
       %c0 = arith.constant 0 : index
@@ -25,14 +37,16 @@ hal.executable.variant public @embedded_elf_x86_64, target = <"llvm-cpu", "embed
       %3 = affine.apply affine_map<()[s0] -> (s0 * 256)>()[%workgroup_id_y]
       %4 = affine.apply affine_map<()[s0] -> (s0 * 256)>()[%workgroup_count_y]
       scf.for %arg0 = %3 to %c512 step %4 {
-        %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
-        %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
-        scf.for %arg1 = %5 to %c1024 step %6 {
-          %7 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%c256, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
-          %8 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %c128], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
-          %9 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%c256, %c128], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
-          %10 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[256, 128, 0], [8, 32, 0], [0, 0, 16]]>} ins(%7, %8 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%9 : tensor<?x?xf32>) -> tensor<?x?xf32>
-          flow.dispatch.tensor.store %10, %2, offsets = [%arg0, %arg1], sizes = [%c256, %c128], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+        %5 = affine.min affine_map<(d0) -> (256, -d0 + 512)>(%arg0)
+        %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+        %7 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
+        scf.for %arg1 = %6 to %c1024 step %7 {
+          %8 = affine.min affine_map<(d0) -> (128, -d0 + 1024)>(%arg1)
+          %9 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%5, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+          %10 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %8], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+          %11 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+          %12 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[256, 128, 0], [8, 32, 0], [0, 0, 16]]>} ins(%9, %10 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%11 : tensor<?x?xf32>) -> tensor<?x?xf32>
+          flow.dispatch.tensor.store %12, %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
         }
       }
       return
@@ -42,8 +56,6 @@ hal.executable.variant public @embedded_elf_x86_64, target = <"llvm-cpu", "embed
 
 // -----// IR Dump After ConvertToDestinationPassingStyle (iree-codegen-convert-to-destination-passing-style) //----- //
 func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
-  %c256 = arith.constant 256 : index
-  %c128 = arith.constant 128 : index
   %c512 = arith.constant 512 : index
   %c1024 = arith.constant 1024 : index
   %c0 = arith.constant 0 : index
@@ -57,14 +69,16 @@ func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
   %3 = affine.apply affine_map<()[s0] -> (s0 * 256)>()[%workgroup_id_y]
   %4 = affine.apply affine_map<()[s0] -> (s0 * 256)>()[%workgroup_count_y]
   scf.for %arg0 = %3 to %c512 step %4 {
-    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
-    %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
-    scf.for %arg1 = %5 to %c1024 step %6 {
-      %7 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%c256, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
-      %8 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %c128], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
-      %9 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%c256, %c128], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
-      %10 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[256, 128, 0], [8, 32, 0], [0, 0, 16]]>} ins(%7, %8 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%9 : tensor<?x?xf32>) -> tensor<?x?xf32>
-      flow.dispatch.tensor.store %10, %2, offsets = [%arg0, %arg1], sizes = [%c256, %c128], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    %5 = affine.min affine_map<(d0) -> (256, -d0 + 512)>(%arg0)
+    %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %7 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
+    scf.for %arg1 = %6 to %c1024 step %7 {
+      %8 = affine.min affine_map<(d0) -> (128, -d0 + 1024)>(%arg1)
+      %9 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%5, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+      %10 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %8], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+      %11 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+      %12 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[256, 128, 0], [8, 32, 0], [0, 0, 16]]>} ins(%9, %10 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%11 : tensor<?x?xf32>) -> tensor<?x?xf32>
+      flow.dispatch.tensor.store %12, %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
     }
   }
   return

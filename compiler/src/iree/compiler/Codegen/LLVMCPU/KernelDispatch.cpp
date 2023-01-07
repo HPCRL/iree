@@ -883,6 +883,9 @@ static LogicalResult setRootConfig(
     func::FuncOp entryPointFn, linalg::ContractionOpInterface contractionOp) {
   auto linalgOp = cast<linalg::LinalgOp>(contractionOp.getOperation());
   unsigned numLoops = linalgOp.getNumLoops();
+
+  std::cout << "Yufan:: [setRootConfig contraction] " << numLoops << std::endl;
+
   {
     SmallVector<unsigned> dims;
     linalgOp.getReductionDims(dims);
@@ -1736,10 +1739,6 @@ LogicalResult initCPULaunchConfig(ModuleOp moduleOp) {
   llvm::StringMap<IREE::HAL::ExecutableExportOp> exportOps =
       getAllEntryPoints(moduleOp);
   for (auto funcOp : moduleOp.getOps<func::FuncOp>()) {
-    // std::string str;
-    // llvm::raw_string_ostream output(str);
-    // funcOp.print(output);
-    // std::cout << "Yufan:: [initCPULaunchConfig] funcOp " << str << std::endl;
     auto exportOp = exportOps.lookup(funcOp.getName());
     if (!exportOp) continue;
     if (getTranslationInfo(exportOp)) continue;
