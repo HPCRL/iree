@@ -30,6 +30,10 @@
 #include "mlir/IR/Matchers.h"
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 
+
+#include<iostream>
+#include <assert.h>
+
 #define DEBUG_TYPE "kernel-dispatch"
 #define KD_DBGS() (llvm::dbgs() << '[' << DEBUG_TYPE << "] ")
 
@@ -1592,7 +1596,6 @@ static LogicalResult setRootConfigImpl(
     const TargetMLTransformInfo &targetMLTransInfo) {
   // Do not overwrite default configuration.
   if (getLoweringConfig(op)) return success();
-
   // Redirect to individual operations.
   auto setRootConfigFn = [&](Operation *op) -> LogicalResult {
     return TypeSwitch<Operation *, LogicalResult>(op)
@@ -1733,6 +1736,10 @@ LogicalResult initCPULaunchConfig(ModuleOp moduleOp) {
   llvm::StringMap<IREE::HAL::ExecutableExportOp> exportOps =
       getAllEntryPoints(moduleOp);
   for (auto funcOp : moduleOp.getOps<func::FuncOp>()) {
+    // std::string str;
+    // llvm::raw_string_ostream output(str);
+    // funcOp.print(output);
+    // std::cout << "Yufan:: [initCPULaunchConfig] funcOp " << str << std::endl;
     auto exportOp = exportOps.lookup(funcOp.getName());
     if (!exportOp) continue;
     if (getTranslationInfo(exportOp)) continue;

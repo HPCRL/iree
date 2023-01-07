@@ -12,6 +12,12 @@ include "mlir/Pass/PassBase.td"
 //------------------------------------------------------------------------------
 // Common/misc passes
 //------------------------------------------------------------------------------
+def YufanAnalysis :
+    Pass<"iree-codegen-yufan-ana", ""> {
+  let summary =
+      "Yufan test analysis pass";
+  let constructor = "mlir::iree_compiler::createYufanAnalysisPass()";
+}
 
 def CleanupBufferAllocView :
     Pass<"iree-codegen-cleanup-buffer-alloc-view", "func::FuncOp"> {
@@ -19,6 +25,7 @@ def CleanupBufferAllocView :
       "Performs cleanups over HAL interface/buffer allocation/view operations";
   let constructor = "mlir::iree_compiler::createCleanupBufferAllocViewPass()";
 }
+
 
 def ConvertToDestinationPassingStyle :
     Pass<"iree-codegen-convert-to-destination-passing-style", "func::FuncOp"> {

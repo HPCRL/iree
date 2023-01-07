@@ -9,5 +9,7 @@
 // Based on mlir-opt but registers the passes and dialects we care about.
 
 #include "iree/compiler/API2/ToolEntryPoints.h"
-
-int main(int argc, char **argv) { return ireeOptRunMain(argc, argv); }
+#include <iostream>
+int main(int argc, char **argv) { 
+    std::cout << "//----> Yufan woof woof ----->" << std::endl;
+    return ireeOptRunMain(argc, argv); }

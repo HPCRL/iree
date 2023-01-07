@@ -1,0 +1,4 @@
+Using iree-compile to get the intermediate ir
+For the user provided tile size example, it will print all. Check TypePropagation /  LinalgStrategyTileAndFusePass
+
+For default, copy ir after TypePropagation and put it in mm.mlir and run iree-opt to generate default tile size lowering.

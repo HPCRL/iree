@@ -23,6 +23,8 @@
 #include "mlir/Pass/PassRegistry.h"
 #include "mlir/Transforms/Passes.h"
 
+#include <iostream>
+
 namespace mlir {
 namespace iree_compiler {
 

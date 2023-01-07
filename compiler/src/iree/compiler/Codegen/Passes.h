@@ -48,6 +48,10 @@ void addIREEComprehensiveBufferizePasses(
     Optional<BufferizationOptions::DeallocationFn> deallocationFn = None,
     Optional<BufferizationOptions::MemCpyFn> memCpyFn = None);
 
+/// @brief 
+/// @return 
+std::unique_ptr<OperationPass<>> createYufanAnalysisPass();
+
 /// Pass to perform canonicalizations/cleanups related to HAL interface/buffer
 /// allocations and view operations.
 std::unique_ptr<OperationPass<func::FuncOp>> createCleanupBufferAllocViewPass();

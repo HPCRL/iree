@@ -1,0 +1,28 @@
+// RUN: iree-opt %s
+
+transform.structured.canonicalized_sequence failures(propagate) {
+^bb1(%variant_op: !pdl.operation):
+  %matmul = transform.structured.match ops{["linalg.matmul"]} in %variant_op
+
+  %foreach_thread, %tiled_generic =
+    transform.iree.tile_to_foreach_thread_and_workgroup_count_region %matmul tile_sizes [10]
+  
+  %variant_op_2 = transform.iree.bufferize %variant_op
+  %func = transform.structured.match ops{["func.func"]} in %variant_op_2
+  transform.iree.foreach_thread_to_workgroup %func
+}
+
+
+
+// transform.structured.canonicalized_sequence failures(propagate) {
+// ^bb1(%variant_op: !pdl.operation):
+//   %0 = transform.structured.match ops{["linalg.matmul"]} in %variant_op
+
+//   %foreach_thread, %tiled_generic =
+//     transform.structured.tile_to_foreach_thread_op %0 num_threads [10]
+
+//   %1 = transform.iree.bufferize %variant_op
+
+//   %func = transform.structured.match ops{["func.func"]} in %1
+//   transform.iree.foreach_thread_to_workgroup %func
+// }

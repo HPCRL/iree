@@ -132,6 +132,7 @@ iree_cc_library(
     "BufferizationAnalysis.h"
     "Transforms.h"
   SRCS
+    "YufanAnalysis.cpp"
     "BufferizationAnalysis.cpp"
     "BufferizeCopyOnlyDispatchesPass.cpp"
     "CleanupBufferAllocViewPass.cpp"

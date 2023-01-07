@@ -24,6 +24,8 @@
 #include "mlir/IR/Types.h"
 #include "mlir/IR/Value.h"
 
+#include <iostream>
+
 using namespace mlir;
 using namespace mlir::iree_compiler;
 
@@ -817,6 +819,7 @@ static LogicalResult setRootConfig(func::FuncOp entryPointFn,
           getCompilationInfo(computeOp)) {
     // If the op already has a lowering config coming from the IR use this and
     // bypass the heuristic.
+    //std::cout << "Yufan:: compilationInfo " << compilationInfo << std::endl;
     return setUserConfig(entryPointFn, computeOp, compilationInfo);
   }
   if (auto linalgOp = dyn_cast<linalg::LinalgOp>(computeOp)) {
