@@ -1,0 +1,1850 @@
+//----> Yufan woof woof ----->
+Pass Manager with 1 passes:
+builtin.module(hal.executable(hal.executable.variant(iree-llvmgpu-lower-executable-target{test-lowering-configuration=false})))
+
+Yufan:: [TileAndDistributeToWorkgroupsPass] 
+Yufan:: [TileAndDistributeToWorkgroupsPass] tiledLoops.empty() 1
+Yufan:: Again [TileAndDistributeToWorkgroupsPass] tiledLoops.empty() 0
+ts 3
+32
+128
+0
+Yufan:: tiled Loop scf.for
+Yufan:: tiled Loop info scf.for
+Yufan:: tiled size 32
+Yufan:: tiled Loop scf.for
+Yufan:: tiled Loop info scf.for
+Yufan:: tiled size 128
+// -----// IR Dump After TileAndDistributeToWorkgroups (iree-codegen-tile-and-distribute-to-workgroups) //----- //
+hal.executable.variant public @cuda_nvptx_fb, target = <"cuda", "cuda-nvptx-fb", {target_arch = "sm_70"}> {
+  hal.executable.export public @matmul_static_dispatch_0_matmul_512x1024x256 ordinal(0) layout(#hal.pipeline.layout<push_constants = 0, sets = [<0, bindings = [<0, storage_buffer, ReadOnly>, <1, storage_buffer, ReadOnly>, <2, storage_buffer>]>]>) attributes {translation_info = #iree_codegen.translation_info<LLVMGPUMatmulSimt>, workgroup_size = [32 : index, 8 : index, 1 : index]} {
+  ^bb0(%arg0: !hal.device, %arg1: index, %arg2: index, %arg3: index, %arg4: index, %arg5: index, %arg6: index, %arg7: index):
+    %c8 = arith.constant 8 : index
+    %c16 = arith.constant 16 : index
+    %c1 = arith.constant 1 : index
+    hal.return %c8, %c16, %c1 : index, index, index
+  }
+  builtin.module {
+    func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+      %c512 = arith.constant 512 : index
+      %c1024 = arith.constant 1024 : index
+      %c0 = arith.constant 0 : index
+      %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+      %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+      %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+      %workgroup_id_x = hal.interface.workgroup.id[0] : index
+      %workgroup_count_x = hal.interface.workgroup.count[0] : index
+      %workgroup_id_y = hal.interface.workgroup.id[1] : index
+      %workgroup_count_y = hal.interface.workgroup.count[1] : index
+      %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+      %4 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_count_y]
+      scf.for %arg0 = %3 to %c512 step %4 {
+        %5 = affine.min affine_map<(d0) -> (32, -d0 + 512)>(%arg0)
+        %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+        %7 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
+        scf.for %arg1 = %6 to %c1024 step %7 {
+          %8 = affine.min affine_map<(d0) -> (128, -d0 + 1024)>(%arg1)
+          %9 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%5, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+          %10 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %8], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+          %11 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+          %12 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%9, %10 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%11 : tensor<?x?xf32>) -> tensor<?x?xf32>
+          flow.dispatch.tensor.store %12, %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+        }
+      }
+      return
+    }
+  }
+}
+
+// -----// IR Dump After ConvertToDestinationPassingStyle (iree-codegen-convert-to-destination-passing-style) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c512 = arith.constant 512 : index
+  %c1024 = arith.constant 1024 : index
+  %c0 = arith.constant 0 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_count_x = hal.interface.workgroup.count[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %workgroup_count_y = hal.interface.workgroup.count[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_count_y]
+  scf.for %arg0 = %3 to %c512 step %4 {
+    %5 = affine.min affine_map<(d0) -> (32, -d0 + 512)>(%arg0)
+    %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %7 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
+    scf.for %arg1 = %6 to %c1024 step %7 {
+      %8 = affine.min affine_map<(d0) -> (128, -d0 + 1024)>(%arg1)
+      %9 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%5, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+      %10 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %8], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+      %11 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+      %12 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%9, %10 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%11 : tensor<?x?xf32>) -> tensor<?x?xf32>
+      flow.dispatch.tensor.store %12, %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    }
+  }
+  return
+}
+
+// -----// IR Dump After Canonicalizer (canonicalize) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c512 = arith.constant 512 : index
+    %c1024 = arith.constant 1024 : index
+    %c0 = arith.constant 0 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_count_x = hal.interface.workgroup.count[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %workgroup_count_y = hal.interface.workgroup.count[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_count_y]
+    scf.for %arg0 = %3 to %c512 step %4 {
+      %5 = affine.min affine_map<(d0) -> (-d0 + 512, 32)>(%arg0)
+      %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+      %7 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
+      scf.for %arg1 = %6 to %c1024 step %7 {
+        %8 = affine.min affine_map<(d0) -> (-d0 + 1024, 128)>(%arg1)
+        %9 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%5, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+        %10 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %8], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+        %11 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+        %12 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%9, %10 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%11 : tensor<?x?xf32>) -> tensor<?x?xf32>
+        flow.dispatch.tensor.store %12, %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+      }
+    }
+    return
+  }
+}
+
+// -----// IR Dump After CSE (cse) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c512 = arith.constant 512 : index
+    %c1024 = arith.constant 1024 : index
+    %c0 = arith.constant 0 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_count_x = hal.interface.workgroup.count[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %workgroup_count_y = hal.interface.workgroup.count[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_count_y]
+    scf.for %arg0 = %3 to %c512 step %4 {
+      %5 = affine.min affine_map<(d0) -> (-d0 + 512, 32)>(%arg0)
+      %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+      %7 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
+      scf.for %arg1 = %6 to %c1024 step %7 {
+        %8 = affine.min affine_map<(d0) -> (-d0 + 1024, 128)>(%arg1)
+        %9 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%5, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+        %10 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %8], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+        %11 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+        %12 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%9, %10 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%11 : tensor<?x?xf32>) -> tensor<?x?xf32>
+        flow.dispatch.tensor.store %12, %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+      }
+    }
+    return
+  }
+}
+
+// -----// IR Dump After WorkgroupSpecialization (iree-codegen-workgroup-specialization) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c512 = arith.constant 512 : index
+  %c1024 = arith.constant 1024 : index
+  %c0 = arith.constant 0 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_count_x = hal.interface.workgroup.count[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %workgroup_count_y = hal.interface.workgroup.count[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_count_y]
+  scf.for %arg0 = %3 to %c512 step %4 {
+    %5 = affine.min affine_map<(d0) -> (-d0 + 512, 32)>(%arg0)
+    %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %7 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
+    scf.for %arg1 = %6 to %c1024 step %7 {
+      %8 = affine.min affine_map<(d0) -> (-d0 + 1024, 128)>(%arg1)
+      %9 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%5, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+      %10 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %8], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+      %11 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+      %12 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%9, %10 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%11 : tensor<?x?xf32>) -> tensor<?x?xf32>
+      flow.dispatch.tensor.store %12, %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    }
+  }
+  return
+}
+
+// -----// IR Dump After Canonicalizer (canonicalize) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c512 = arith.constant 512 : index
+    %c1024 = arith.constant 1024 : index
+    %c0 = arith.constant 0 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_count_x = hal.interface.workgroup.count[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %workgroup_count_y = hal.interface.workgroup.count[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_count_y]
+    scf.for %arg0 = %3 to %c512 step %4 {
+      %5 = affine.min affine_map<(d0) -> (-d0 + 512, 32)>(%arg0)
+      %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+      %7 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
+      scf.for %arg1 = %6 to %c1024 step %7 {
+        %8 = affine.min affine_map<(d0) -> (-d0 + 1024, 128)>(%arg1)
+        %9 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%5, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+        %10 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %8], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+        %11 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+        %12 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%9, %10 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%11 : tensor<?x?xf32>) -> tensor<?x?xf32>
+        flow.dispatch.tensor.store %12, %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+      }
+    }
+    return
+  }
+}
+
+// -----// IR Dump After CSE (cse) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c512 = arith.constant 512 : index
+    %c1024 = arith.constant 1024 : index
+    %c0 = arith.constant 0 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_count_x = hal.interface.workgroup.count[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %workgroup_count_y = hal.interface.workgroup.count[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_count_y]
+    scf.for %arg0 = %3 to %c512 step %4 {
+      %5 = affine.min affine_map<(d0) -> (-d0 + 512, 32)>(%arg0)
+      %6 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+      %7 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_count_x]
+      scf.for %arg1 = %6 to %c1024 step %7 {
+        %8 = affine.min affine_map<(d0) -> (-d0 + 1024, 128)>(%arg1)
+        %9 = flow.dispatch.tensor.load %0, offsets = [%arg0, 0], sizes = [%5, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+        %10 = flow.dispatch.tensor.load %1, offsets = [0, %arg1], sizes = [256, %8], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+        %11 = flow.dispatch.tensor.load %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+        %12 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%9, %10 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%11 : tensor<?x?xf32>) -> tensor<?x?xf32>
+        flow.dispatch.tensor.store %12, %2, offsets = [%arg0, %arg1], sizes = [%5, %8], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+      }
+    }
+    return
+  }
+}
+
+// -----// IR Dump After RemoveSingleIterationLoop (iree-codegen-remove-single-iteration-loop) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c0 = arith.constant 0 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<(d0) -> (-d0 + 512, 32)>(%3)
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<(d0) -> (-d0 + 1024, 128)>(%5)
+  %7 = flow.dispatch.tensor.load %0, offsets = [%3, 0], sizes = [%4, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+  %8 = flow.dispatch.tensor.load %1, offsets = [0, %5], sizes = [256, %6], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+  %9 = flow.dispatch.tensor.load %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+  %10 = linalg.matmul {lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%7, %8 : tensor<?x256xf32>, tensor<256x?xf32>) outs(%9 : tensor<?x?xf32>) -> tensor<?x?xf32>
+  flow.dispatch.tensor.store %10, %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  return
+}
+
+// -----// IR Dump After LLVMGPUTensorAlloc (iree-llvmgpu-alloc) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c0 = arith.constant 0 : index
+  %c1 = arith.constant 1 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %7 = flow.dispatch.tensor.load %0, offsets = [%3, 0], sizes = [%4, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+  %8 = flow.dispatch.tensor.load %1, offsets = [0, %5], sizes = [256, %6], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+  %9 = flow.dispatch.tensor.load %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+  %10 = scf.for %arg0 = %c0 to %c256 step %c32 iter_args(%arg1 = %9) -> (tensor<?x?xf32>) {
+    %dim = tensor.dim %7, %c0 : tensor<?x256xf32>
+    %dim_0 = tensor.dim %8, %c1 : tensor<256x?xf32>
+    %dim_1 = tensor.dim %9, %c0 : tensor<?x?xf32>
+    %dim_2 = tensor.dim %9, %c1 : tensor<?x?xf32>
+    %extracted_slice = tensor.extract_slice %7[0, %arg0] [%dim, 32] [1, 1] : tensor<?x256xf32> to tensor<?x32xf32>
+    %extracted_slice_3 = tensor.extract_slice %8[%arg0, 0] [32, %dim_0] [1, 1] : tensor<256x?xf32> to tensor<32x?xf32>
+    %extracted_slice_4 = tensor.extract_slice %arg1[0, 0] [%dim_1, %dim_2] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+    %11 = linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%extracted_slice, %extracted_slice_3 : tensor<?x32xf32>, tensor<32x?xf32>) outs(%extracted_slice_4 : tensor<?x?xf32>) -> tensor<?x?xf32>
+    %inserted_slice = tensor.insert_slice %11 into %arg1[0, 0] [%dim_1, %dim_2] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+    scf.yield %inserted_slice : tensor<?x?xf32>
+  }
+  flow.dispatch.tensor.store %10, %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  return
+}
+
+// -----// IR Dump After LLVMGPUTileTensor (iree-llvmgpu-tile-tensor) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c1 = arith.constant 1 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %7 = flow.dispatch.tensor.load %0, offsets = [%3, 0], sizes = [%4, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+  %8 = flow.dispatch.tensor.load %1, offsets = [0, %5], sizes = [256, %6], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+  %9 = flow.dispatch.tensor.load %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+  %10 = scf.for %arg0 = %c0 to %c256 step %c32 iter_args(%arg1 = %9) -> (tensor<?x?xf32>) {
+    %dim = tensor.dim %7, %c0 : tensor<?x256xf32>
+    %dim_0 = tensor.dim %8, %c1 : tensor<256x?xf32>
+    %dim_1 = tensor.dim %9, %c0 : tensor<?x?xf32>
+    %dim_2 = tensor.dim %9, %c1 : tensor<?x?xf32>
+    %extracted_slice = tensor.extract_slice %7[0, %arg0] [%dim, 32] [1, 1] : tensor<?x256xf32> to tensor<?x32xf32>
+    %extracted_slice_3 = tensor.extract_slice %8[%arg0, 0] [32, %dim_0] [1, 1] : tensor<256x?xf32> to tensor<32x?xf32>
+    %extracted_slice_4 = tensor.extract_slice %arg1[0, 0] [%dim_1, %dim_2] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+    %11 = scf.foreach_thread (%arg2, %arg3) in (%c8, %c32) shared_outs(%arg4 = %extracted_slice_4) -> (tensor<?x?xf32>) {
+      %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg2)[%dim]
+      %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+      %14 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg3)[%dim_0]
+      %15 = affine.max affine_map<(d0) -> (0, d0)>(%14)
+      %16 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%dim]
+      %17 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%dim_0]
+      %18 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%dim]
+      %19 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%dim_0]
+      %extracted_slice_5 = tensor.extract_slice %extracted_slice[%16, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+      %extracted_slice_6 = tensor.extract_slice %extracted_slice_3[0, %17] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+      %extracted_slice_7 = tensor.extract_slice %arg4[%18, %19] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %extracted_slice_8 = tensor.extract_slice %extracted_slice_5[0, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+      %extracted_slice_9 = tensor.extract_slice %extracted_slice_6[0, 0] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+      %extracted_slice_10 = tensor.extract_slice %extracted_slice_7[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %20 = linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%extracted_slice_8, %extracted_slice_9 : tensor<?x32xf32>, tensor<32x?xf32>) outs(%extracted_slice_10 : tensor<?x?xf32>) -> tensor<?x?xf32>
+      %inserted_slice_11 = tensor.insert_slice %20 into %extracted_slice_7[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      %21 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%dim]
+      %22 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%dim_0]
+      scf.foreach_thread.perform_concurrently {
+        tensor.parallel_insert_slice %inserted_slice_11 into %arg4[%21, %22] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      }
+    } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+    %inserted_slice = tensor.insert_slice %11 into %arg1[0, 0] [%dim_1, %dim_2] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+    scf.yield %inserted_slice : tensor<?x?xf32>
+  }
+  flow.dispatch.tensor.store %10, %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  return
+}
+
+// -----// IR Dump After GPUVectorization (iree-codegen-gpu-vectorization) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c1 = arith.constant 1 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %7 = flow.dispatch.tensor.load %0, offsets = [%3, 0], sizes = [%4, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+  %8 = flow.dispatch.tensor.load %1, offsets = [0, %5], sizes = [256, %6], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+  %9 = flow.dispatch.tensor.load %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+  %10 = scf.for %arg0 = %c0 to %c256 step %c32 iter_args(%arg1 = %9) -> (tensor<?x?xf32>) {
+    %dim = tensor.dim %7, %c0 : tensor<?x256xf32>
+    %dim_0 = tensor.dim %8, %c1 : tensor<256x?xf32>
+    %dim_1 = tensor.dim %9, %c0 : tensor<?x?xf32>
+    %dim_2 = tensor.dim %9, %c1 : tensor<?x?xf32>
+    %extracted_slice = tensor.extract_slice %7[0, %arg0] [%dim, 32] [1, 1] : tensor<?x256xf32> to tensor<?x32xf32>
+    %extracted_slice_3 = tensor.extract_slice %8[%arg0, 0] [32, %dim_0] [1, 1] : tensor<256x?xf32> to tensor<32x?xf32>
+    %extracted_slice_4 = tensor.extract_slice %arg1[0, 0] [%dim_1, %dim_2] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+    %11 = scf.foreach_thread (%arg2, %arg3) in (%c8, %c32) shared_outs(%arg4 = %extracted_slice_4) -> (tensor<?x?xf32>) {
+      %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg2)[%dim]
+      %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+      %14 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg3)[%dim_0]
+      %15 = affine.max affine_map<(d0) -> (0, d0)>(%14)
+      %16 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%dim]
+      %17 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%dim_0]
+      %18 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%dim]
+      %19 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%dim_0]
+      %extracted_slice_5 = tensor.extract_slice %extracted_slice[%16, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+      %extracted_slice_6 = tensor.extract_slice %extracted_slice_3[0, %17] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+      %extracted_slice_7 = tensor.extract_slice %arg4[%18, %19] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %extracted_slice_8 = tensor.extract_slice %extracted_slice_5[0, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+      %extracted_slice_9 = tensor.extract_slice %extracted_slice_6[0, 0] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+      %extracted_slice_10 = tensor.extract_slice %extracted_slice_7[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %20 = linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%extracted_slice_8, %extracted_slice_9 : tensor<?x32xf32>, tensor<32x?xf32>) outs(%extracted_slice_10 : tensor<?x?xf32>) -> tensor<?x?xf32>
+      %inserted_slice_11 = tensor.insert_slice %20 into %extracted_slice_7[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      %21 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%dim]
+      %22 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%dim_0]
+      scf.foreach_thread.perform_concurrently {
+        tensor.parallel_insert_slice %inserted_slice_11 into %arg4[%21, %22] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      }
+    } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+    %inserted_slice = tensor.insert_slice %11 into %arg1[0, 0] [%dim_1, %dim_2] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+    scf.yield %inserted_slice : tensor<?x?xf32>
+  }
+  flow.dispatch.tensor.store %10, %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  return
+}
+
+// -----// IR Dump After Canonicalizer (canonicalize) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %7 = flow.dispatch.tensor.load %0, offsets = [%3, 0], sizes = [%4, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+  %8 = flow.dispatch.tensor.load %1, offsets = [0, %5], sizes = [256, %6], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+  %9 = flow.dispatch.tensor.load %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+  %10 = scf.for %arg0 = %c0 to %c256 step %c32 iter_args(%arg1 = %9) -> (tensor<?x?xf32>) {
+    %extracted_slice = tensor.extract_slice %7[0, %arg0] [%4, 32] [1, 1] : tensor<?x256xf32> to tensor<?x32xf32>
+    %extracted_slice_0 = tensor.extract_slice %8[%arg0, 0] [32, %6] [1, 1] : tensor<256x?xf32> to tensor<32x?xf32>
+    %extracted_slice_1 = tensor.extract_slice %arg1[0, 0] [%4, %6] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+    %11 = scf.foreach_thread (%arg2, %arg3) in (%c8, %c32) shared_outs(%arg4 = %extracted_slice_1) -> (tensor<?x?xf32>) {
+      %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg2)[%4]
+      %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+      %14 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg3)[%6]
+      %15 = affine.max affine_map<(d0) -> (0, d0)>(%14)
+      %16 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%4]
+      %17 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%6]
+      %18 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%4]
+      %19 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%6]
+      %extracted_slice_2 = tensor.extract_slice %extracted_slice[%16, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+      %extracted_slice_3 = tensor.extract_slice %extracted_slice_0[0, %17] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+      %extracted_slice_4 = tensor.extract_slice %arg4[%18, %19] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %extracted_slice_5 = tensor.extract_slice %extracted_slice_2[0, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+      %extracted_slice_6 = tensor.extract_slice %extracted_slice_3[0, 0] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+      %extracted_slice_7 = tensor.extract_slice %extracted_slice_4[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %20 = linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%extracted_slice_5, %extracted_slice_6 : tensor<?x32xf32>, tensor<32x?xf32>) outs(%extracted_slice_7 : tensor<?x?xf32>) -> tensor<?x?xf32>
+      %inserted_slice_8 = tensor.insert_slice %20 into %extracted_slice_4[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      %21 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%4]
+      %22 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%6]
+      scf.foreach_thread.perform_concurrently {
+        tensor.parallel_insert_slice %inserted_slice_8 into %arg4[%21, %22] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      }
+    } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+    %inserted_slice = tensor.insert_slice %11 into %arg1[0, 0] [%4, %6] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+    scf.yield %inserted_slice : tensor<?x?xf32>
+  }
+  flow.dispatch.tensor.store %10, %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  return
+}
+
+// -----// IR Dump After CSE (cse) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %7 = flow.dispatch.tensor.load %0, offsets = [%3, 0], sizes = [%4, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+  %8 = flow.dispatch.tensor.load %1, offsets = [0, %5], sizes = [256, %6], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+  %9 = flow.dispatch.tensor.load %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+  %10 = scf.for %arg0 = %c0 to %c256 step %c32 iter_args(%arg1 = %9) -> (tensor<?x?xf32>) {
+    %extracted_slice = tensor.extract_slice %7[0, %arg0] [%4, 32] [1, 1] : tensor<?x256xf32> to tensor<?x32xf32>
+    %extracted_slice_0 = tensor.extract_slice %8[%arg0, 0] [32, %6] [1, 1] : tensor<256x?xf32> to tensor<32x?xf32>
+    %extracted_slice_1 = tensor.extract_slice %arg1[0, 0] [%4, %6] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+    %11 = scf.foreach_thread (%arg2, %arg3) in (%c8, %c32) shared_outs(%arg4 = %extracted_slice_1) -> (tensor<?x?xf32>) {
+      %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg2)[%4]
+      %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+      %14 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg3)[%6]
+      %15 = affine.max affine_map<(d0) -> (0, d0)>(%14)
+      %16 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%4]
+      %17 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%6]
+      %extracted_slice_2 = tensor.extract_slice %extracted_slice[%16, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+      %extracted_slice_3 = tensor.extract_slice %extracted_slice_0[0, %17] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+      %extracted_slice_4 = tensor.extract_slice %arg4[%16, %17] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %extracted_slice_5 = tensor.extract_slice %extracted_slice_2[0, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+      %extracted_slice_6 = tensor.extract_slice %extracted_slice_3[0, 0] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+      %extracted_slice_7 = tensor.extract_slice %extracted_slice_4[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %18 = linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%extracted_slice_5, %extracted_slice_6 : tensor<?x32xf32>, tensor<32x?xf32>) outs(%extracted_slice_7 : tensor<?x?xf32>) -> tensor<?x?xf32>
+      %inserted_slice_8 = tensor.insert_slice %18 into %extracted_slice_4[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      scf.foreach_thread.perform_concurrently {
+        tensor.parallel_insert_slice %inserted_slice_8 into %arg4[%16, %17] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      }
+    } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+    %inserted_slice = tensor.insert_slice %11 into %arg1[0, 0] [%4, %6] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+    scf.yield %inserted_slice : tensor<?x?xf32>
+  }
+  flow.dispatch.tensor.store %10, %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  return
+}
+
+// -----// IR Dump After EliminateEmptyTensors (iree-eliminate-empty-tensors) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c8 = arith.constant 8 : index
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %7 = flow.dispatch.tensor.load %0, offsets = [%3, 0], sizes = [%4, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+    %8 = flow.dispatch.tensor.load %1, offsets = [0, %5], sizes = [256, %6], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+    %9 = flow.dispatch.tensor.load %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+    %10 = scf.for %arg0 = %c0 to %c256 step %c32 iter_args(%arg1 = %9) -> (tensor<?x?xf32>) {
+      %extracted_slice = tensor.extract_slice %7[0, %arg0] [%4, 32] [1, 1] : tensor<?x256xf32> to tensor<?x32xf32>
+      %extracted_slice_0 = tensor.extract_slice %8[%arg0, 0] [32, %6] [1, 1] : tensor<256x?xf32> to tensor<32x?xf32>
+      %extracted_slice_1 = tensor.extract_slice %arg1[0, 0] [%4, %6] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %11 = scf.foreach_thread (%arg2, %arg3) in (%c8, %c32) shared_outs(%arg4 = %extracted_slice_1) -> (tensor<?x?xf32>) {
+        %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg2)[%4]
+        %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+        %14 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg3)[%6]
+        %15 = affine.max affine_map<(d0) -> (0, d0)>(%14)
+        %16 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%4]
+        %17 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%6]
+        %extracted_slice_2 = tensor.extract_slice %extracted_slice[%16, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+        %extracted_slice_3 = tensor.extract_slice %extracted_slice_0[0, %17] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+        %extracted_slice_4 = tensor.extract_slice %arg4[%16, %17] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+        %extracted_slice_5 = tensor.extract_slice %extracted_slice_2[0, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+        %extracted_slice_6 = tensor.extract_slice %extracted_slice_3[0, 0] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+        %extracted_slice_7 = tensor.extract_slice %extracted_slice_4[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+        %18 = linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%extracted_slice_5, %extracted_slice_6 : tensor<?x32xf32>, tensor<32x?xf32>) outs(%extracted_slice_7 : tensor<?x?xf32>) -> tensor<?x?xf32>
+        %inserted_slice_8 = tensor.insert_slice %18 into %extracted_slice_4[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+        scf.foreach_thread.perform_concurrently {
+          tensor.parallel_insert_slice %inserted_slice_8 into %arg4[%16, %17] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+        }
+      } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+      %inserted_slice = tensor.insert_slice %11 into %arg1[0, 0] [%4, %6] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      scf.yield %inserted_slice : tensor<?x?xf32>
+    }
+    flow.dispatch.tensor.store %10, %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    return
+  }
+}
+
+// -----// IR Dump After EmptyTensorToAllocTensor (empty-tensor-to-alloc-tensor) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c8 = arith.constant 8 : index
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %7 = flow.dispatch.tensor.load %0, offsets = [%3, 0], sizes = [%4, 256], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<512x256xf32>> -> tensor<?x256xf32>
+    %8 = flow.dispatch.tensor.load %1, offsets = [0, %5], sizes = [256, %6], strides = [1, 1] : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>> -> tensor<256x?xf32>
+    %9 = flow.dispatch.tensor.load %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>> -> tensor<?x?xf32>
+    %10 = scf.for %arg0 = %c0 to %c256 step %c32 iter_args(%arg1 = %9) -> (tensor<?x?xf32>) {
+      %extracted_slice = tensor.extract_slice %7[0, %arg0] [%4, 32] [1, 1] : tensor<?x256xf32> to tensor<?x32xf32>
+      %extracted_slice_0 = tensor.extract_slice %8[%arg0, 0] [32, %6] [1, 1] : tensor<256x?xf32> to tensor<32x?xf32>
+      %extracted_slice_1 = tensor.extract_slice %arg1[0, 0] [%4, %6] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+      %11 = scf.foreach_thread (%arg2, %arg3) in (%c8, %c32) shared_outs(%arg4 = %extracted_slice_1) -> (tensor<?x?xf32>) {
+        %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg2)[%4]
+        %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+        %14 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg3)[%6]
+        %15 = affine.max affine_map<(d0) -> (0, d0)>(%14)
+        %16 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%4]
+        %17 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%6]
+        %extracted_slice_2 = tensor.extract_slice %extracted_slice[%16, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+        %extracted_slice_3 = tensor.extract_slice %extracted_slice_0[0, %17] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+        %extracted_slice_4 = tensor.extract_slice %arg4[%16, %17] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+        %extracted_slice_5 = tensor.extract_slice %extracted_slice_2[0, 0] [%13, 32] [1, 1] : tensor<?x32xf32> to tensor<?x32xf32>
+        %extracted_slice_6 = tensor.extract_slice %extracted_slice_3[0, 0] [32, %15] [1, 1] : tensor<32x?xf32> to tensor<32x?xf32>
+        %extracted_slice_7 = tensor.extract_slice %extracted_slice_4[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> to tensor<?x?xf32>
+        %18 = linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%extracted_slice_5, %extracted_slice_6 : tensor<?x32xf32>, tensor<32x?xf32>) outs(%extracted_slice_7 : tensor<?x?xf32>) -> tensor<?x?xf32>
+        %inserted_slice_8 = tensor.insert_slice %18 into %extracted_slice_4[0, 0] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+        scf.foreach_thread.perform_concurrently {
+          tensor.parallel_insert_slice %inserted_slice_8 into %arg4[%16, %17] [%13, %15] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+        }
+      } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+      %inserted_slice = tensor.insert_slice %11 into %arg1[0, 0] [%4, %6] [1, 1] : tensor<?x?xf32> into tensor<?x?xf32>
+      scf.yield %inserted_slice : tensor<?x?xf32>
+    }
+    flow.dispatch.tensor.store %10, %2, offsets = [%3, %5], sizes = [%4, %6], strides = [1, 1] : tensor<?x?xf32> -> !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    return
+  }
+}
+
+// -----// IR Dump After IREEComprehensiveBufferize (iree-codegen-iree-comprehensive-bufferize) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c8 = arith.constant 8 : index
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %0, 64 : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+    %1 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+    %2 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %2, 64 : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+    %3 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+    %4 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %4, 64 : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+    %5 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %6 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %7 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %8 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %9 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%6, 0] [%7, 256] [1, 1] : memref<512x256xf32, #hal.descriptor_type<storage_buffer>> to memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_0 = memref.subview %2[0, %8] [256, %9] [1, 1] : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_1 = memref.subview %4[%6, %8] [%7, %9] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %10 = scf.for %arg0 = %c0 to %c256 step %c32 iter_args(%arg1 = %subview_1) -> (memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) {
+      %subview_3 = memref.subview %subview[0, %arg0] [%7, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_4 = memref.subview %subview_0[%arg0, 0] [32, %9] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_5 = memref.subview %arg1[0, 0] [%7, %9] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      scf.foreach_thread (%arg2, %arg3) in (%c8, %c32) {
+        %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg2)[%7]
+        %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+        %13 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg3)[%9]
+        %14 = affine.max affine_map<(d0) -> (0, d0)>(%13)
+        %15 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%7]
+        %16 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%9]
+        %subview_7 = memref.subview %subview_3[%15, 0] [%12, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_8 = memref.subview %subview_4[0, %16] [32, %14] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_9 = memref.subview %subview_5[%15, %16] [%12, %14] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_10 = memref.subview %subview_7[0, 0] [%12, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_11 = memref.subview %subview_8[0, 0] [32, %14] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_12 = memref.subview %subview_9[0, 0] [%12, %14] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_10, %subview_11 : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>, memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) outs(%subview_12 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>)
+        %subview_13 = memref.subview %subview_9[0, 0] [%12, %14] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        memref.copy %subview_12, %subview_13 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_14 = memref.subview %subview_5[%15, %16] [%12, %14] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        memref.copy %subview_9, %subview_14 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+      %subview_6 = memref.subview %arg1[0, 0] [%7, %9] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      memref.copy %subview_5, %subview_6 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      scf.yield %arg1 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    }
+    %subview_2 = memref.subview %4[%6, %8] [%7, %9] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    memref.copy %10, %subview_2 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    return
+  }
+}
+
+// -----// IR Dump After ResolveShapedTypeResultDims (resolve-shaped-type-result-dims) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c8 = arith.constant 8 : index
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %0, 64 : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+    %1 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+    %2 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %2, 64 : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+    %3 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+    %4 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %4, 64 : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+    %5 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %6 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %7 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %8 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %9 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%6, 0] [%7, 256] [1, 1] : memref<512x256xf32, #hal.descriptor_type<storage_buffer>> to memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_0 = memref.subview %2[0, %8] [256, %9] [1, 1] : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_1 = memref.subview %4[%6, %8] [%7, %9] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %10 = scf.for %arg0 = %c0 to %c256 step %c32 iter_args(%arg1 = %subview_1) -> (memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) {
+      %subview_3 = memref.subview %subview[0, %arg0] [%7, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_4 = memref.subview %subview_0[%arg0, 0] [32, %9] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_5 = memref.subview %arg1[0, 0] [%7, %9] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      scf.foreach_thread (%arg2, %arg3) in (%c8, %c32) {
+        %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg2)[%7]
+        %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+        %13 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg3)[%9]
+        %14 = affine.max affine_map<(d0) -> (0, d0)>(%13)
+        %15 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg2)[%7]
+        %16 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg3)[%9]
+        %subview_7 = memref.subview %subview_3[%15, 0] [%12, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_8 = memref.subview %subview_4[0, %16] [32, %14] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_9 = memref.subview %subview_5[%15, %16] [%12, %14] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_10 = memref.subview %subview_7[0, 0] [%12, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_11 = memref.subview %subview_8[0, 0] [32, %14] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_12 = memref.subview %subview_9[0, 0] [%12, %14] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_10, %subview_11 : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>, memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) outs(%subview_12 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>)
+        %subview_13 = memref.subview %subview_9[0, 0] [%12, %14] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        memref.copy %subview_12, %subview_13 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_14 = memref.subview %subview_5[%15, %16] [%12, %14] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        memref.copy %subview_9, %subview_14 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+      %subview_6 = memref.subview %arg1[0, 0] [%7, %9] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      memref.copy %subview_5, %subview_6 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      scf.yield %arg1 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    }
+    %subview_2 = memref.subview %4[%6, %8] [%7, %9] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    memref.copy %10, %subview_2 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    return
+  }
+}
+
+// -----// IR Dump After Canonicalizer (canonicalize) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %0, 64 : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+  %1 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %2, 64 : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+  %3 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %4 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %4, 64 : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+  %5 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %6 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %7 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %8 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %9 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%6, 0] [%7, 256] [1, 1] : memref<512x256xf32, #hal.descriptor_type<storage_buffer>> to memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  %subview_0 = memref.subview %2[0, %8] [256, %9] [1, 1] : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  %subview_1 = memref.subview %4[%6, %8] [%7, %9] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_3 = memref.subview %subview[0, %arg0] [%7, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_4 = memref.subview %subview_0[%arg0, 0] [32, %9] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_5 = memref.subview %subview_1[0, 0] [%7, %9] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    scf.foreach_thread (%arg1, %arg2) in (%c8, %c32) {
+      %10 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg1)[%7]
+      %11 = affine.max affine_map<(d0) -> (0, d0)>(%10)
+      %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg2)[%9]
+      %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg1)[%7]
+      %15 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg2)[%9]
+      %subview_7 = memref.subview %subview_3[%14, 0] [%11, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_8 = memref.subview %subview_4[0, %15] [32, %13] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_9 = memref.subview %subview_5[%14, %15] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%11, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_11 = memref.subview %subview_8[0, 0] [32, %13] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_12 = memref.subview %subview_9[0, 0] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_10, %subview_11 : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>, memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) outs(%subview_12 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>)
+      %subview_13 = memref.subview %subview_9[0, 0] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      memref.copy %subview_12, %subview_13 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_14 = memref.subview %subview_5[%14, %15] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      memref.copy %subview_9, %subview_14 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+    %subview_6 = memref.subview %subview_1[0, 0] [%7, %9] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    memref.copy %subview_5, %subview_6 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  }
+  %subview_2 = memref.subview %4[%6, %8] [%7, %9] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  memref.copy %subview_1, %subview_2 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  return
+}
+
+// -----// IR Dump After CSE (cse) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %0, 64 : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+  %1 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %2, 64 : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+  %3 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %4 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %4, 64 : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+  %5 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %6 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %7 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %8 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %9 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%6, 0] [%7, 256] [1, 1] : memref<512x256xf32, #hal.descriptor_type<storage_buffer>> to memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  %subview_0 = memref.subview %2[0, %8] [256, %9] [1, 1] : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  %subview_1 = memref.subview %4[%6, %8] [%7, %9] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%7, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %9] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%7, %9] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    scf.foreach_thread (%arg1, %arg2) in (%c8, %c32) {
+      %10 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg1)[%7]
+      %11 = affine.max affine_map<(d0) -> (0, d0)>(%10)
+      %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg2)[%9]
+      %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg1)[%7]
+      %15 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg2)[%9]
+      %subview_5 = memref.subview %subview_2[%14, 0] [%11, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_6 = memref.subview %subview_3[0, %15] [32, %13] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_7 = memref.subview %subview_4[%14, %15] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%11, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %13] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>, memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>)
+      memref.copy %subview_10, %subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      memref.copy %subview_7, %subview_7 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+    memref.copy %subview_4, %subview_4 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  }
+  memref.copy %subview_1, %subview_1 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  return
+}
+
+// -----// IR Dump After Canonicalizer (canonicalize) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %0, 64 : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+  %1 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<512x256xf32>>
+  %2 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %2, 64 : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+  %3 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readonly:tensor<256x1024xf32>>
+  %4 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %4, 64 : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+  %5 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : !flow.dispatch.tensor<readwrite:tensor<512x1024xf32>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %6 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %7 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %8 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %9 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%6, 0] [%7, 256] [1, 1] : memref<512x256xf32, #hal.descriptor_type<storage_buffer>> to memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  %subview_0 = memref.subview %2[0, %8] [256, %9] [1, 1] : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  %subview_1 = memref.subview %4[%6, %8] [%7, %9] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%7, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %9] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%7, %9] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    scf.foreach_thread (%arg1, %arg2) in (%c8, %c32) {
+      %10 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg1)[%7]
+      %11 = affine.max affine_map<(d0) -> (0, d0)>(%10)
+      %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg2)[%9]
+      %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg1)[%7]
+      %15 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg2)[%9]
+      %subview_5 = memref.subview %subview_2[%14, 0] [%11, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_6 = memref.subview %subview_3[0, %15] [32, %13] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_7 = memref.subview %subview_4[%14, %15] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%11, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %13] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>, memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>)
+    } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+  }
+  return
+}
+
+// -----// IR Dump After CleanupBufferAllocView (iree-codegen-cleanup-buffer-alloc-view) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %0, 64 : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32, #hal.descriptor_type<storage_buffer>> to memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    scf.foreach_thread (%arg1, %arg2) in (%c8, %c32) {
+      %7 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg1)[%4]
+      %8 = affine.max affine_map<(d0) -> (0, d0)>(%7)
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg2)[%6]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg1)[%4]
+      %12 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg2)[%6]
+      %subview_5 = memref.subview %subview_2[%11, 0] [%8, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_6 = memref.subview %subview_3[0, %12] [32, %10] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_7 = memref.subview %subview_4[%11, %12] [%8, %10] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%8, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %10] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%8, %10] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>, memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>)
+    } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+  }
+  return
+}
+
+// -----// IR Dump After Canonicalizer (canonicalize) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c8 = arith.constant 8 : index
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %0, 64 : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %1, 64 : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %2, 64 : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32, #hal.descriptor_type<storage_buffer>> to memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    scf.for %arg0 = %c0 to %c256 step %c32 {
+      %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      scf.foreach_thread (%arg1, %arg2) in (%c8, %c32) {
+        %7 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg1)[%4]
+        %8 = affine.max affine_map<(d0) -> (0, d0)>(%7)
+        %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg2)[%6]
+        %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+        %11 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg1)[%4]
+        %12 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg2)[%6]
+        %subview_5 = memref.subview %subview_2[%11, 0] [%8, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_6 = memref.subview %subview_3[0, %12] [32, %10] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_7 = memref.subview %subview_4[%11, %12] [%8, %10] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_8 = memref.subview %subview_5[0, 0] [%8, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_9 = memref.subview %subview_6[0, 0] [32, %10] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_10 = memref.subview %subview_7[0, 0] [%8, %10] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>, memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>)
+      } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+    }
+    return
+  }
+}
+
+// -----// IR Dump After CSE (cse) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c8 = arith.constant 8 : index
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %0, 64 : memref<512x256xf32, #hal.descriptor_type<storage_buffer>>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %1, 64 : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+    memref.assume_alignment %2, 64 : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32, #hal.descriptor_type<storage_buffer>> to memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+    scf.for %arg0 = %c0 to %c256 step %c32 {
+      %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+      scf.foreach_thread (%arg1, %arg2) in (%c8, %c32) {
+        %7 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg1)[%4]
+        %8 = affine.max affine_map<(d0) -> (0, d0)>(%7)
+        %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg2)[%6]
+        %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+        %11 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg1)[%4]
+        %12 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg2)[%6]
+        %subview_5 = memref.subview %subview_2[%11, 0] [%8, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_6 = memref.subview %subview_3[0, %12] [32, %10] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_7 = memref.subview %subview_4[%11, %12] [%8, %10] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_8 = memref.subview %subview_5[0, 0] [%8, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_9 = memref.subview %subview_6[0, 0] [32, %10] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        %subview_10 = memref.subview %subview_7[0, 0] [%8, %10] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>> to memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>
+        linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>, memref<32x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>, #hal.descriptor_type<storage_buffer>>)
+      } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+    }
+    return
+  }
+}
+
+// -----// IR Dump After EraseHALDescriptorTypeFromMemRef (iree-codegen-erase-hal-descriptor-type-from-memref) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+  memref.assume_alignment %0, 64 : memref<512x256xf32>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    scf.foreach_thread (%arg1, %arg2) in (%c8, %c32) {
+      %7 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%arg1)[%4]
+      %8 = affine.max affine_map<(d0) -> (0, d0)>(%7)
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%arg2)[%6]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%arg1)[%4]
+      %12 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%arg2)[%6]
+      %subview_5 = memref.subview %subview_2[%11, 0] [%8, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_6 = memref.subview %subview_3[0, %12] [32, %10] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_7 = memref.subview %subview_4[%11, %12] [%8, %10] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%8, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %10] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%8, %10] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+    } {mapping = [#gpu.thread<y>, #gpu.thread<x>]}
+  }
+  return
+}
+
+// -----// IR Dump After LLVMGPUDistribute (iree-llvmgpu-distribute) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c8 = arith.constant 8 : index
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+  memref.assume_alignment %0, 64 : memref<512x256xf32>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %c1 = arith.constant 1 : index
+    %7 = gpu.thread_id  x
+    %8 = gpu.thread_id  y
+    %9 = gpu.thread_id  z
+    %10 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+    %11 = affine.max affine_map<(d0) -> (0, d0)>(%10)
+    %12 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+    %13 = affine.max affine_map<(d0) -> (0, d0)>(%12)
+    %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+    %15 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+    %subview_5 = memref.subview %subview_2[%14, 0] [%11, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_6 = memref.subview %subview_3[0, %15] [32, %13] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_7 = memref.subview %subview_4[%14, %15] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_8 = memref.subview %subview_5[0, 0] [%11, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_9 = memref.subview %subview_6[0, 0] [32, %13] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_10 = memref.subview %subview_7[0, 0] [%11, %13] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+  }
+  return
+}
+
+// -----// IR Dump After MemrefCopyToLinalgPass (iree-codegen-memrefcopy-to-linalg) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+  memref.assume_alignment %0, 64 : memref<512x256xf32>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %7 = gpu.thread_id  x
+    %8 = gpu.thread_id  y
+    %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+    %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+    %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+    %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+    %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+    %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+    %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+  }
+  return
+}
+
+// -----// IR Dump After GPUDistributeSharedMemoryCopy (iree-gpu-distribute-shared-memory-copy) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+  memref.assume_alignment %0, 64 : memref<512x256xf32>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %7 = gpu.thread_id  x
+    %8 = gpu.thread_id  y
+    %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+    %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+    %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+    %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+    %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+    %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+    %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+  }
+  return
+}
+
+// -----// IR Dump After Canonicalizer (canonicalize) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+    memref.assume_alignment %0, 64 : memref<512x256xf32>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+    memref.assume_alignment %1, 64 : memref<256x1024xf32>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+    memref.assume_alignment %2, 64 : memref<512x1024xf32>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+    %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    scf.for %arg0 = %c0 to %c256 step %c32 {
+      %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %7 = gpu.thread_id  x
+      %8 = gpu.thread_id  y
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+      %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+      %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+      %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+    }
+    return
+  }
+}
+
+// -----// IR Dump After CSE (cse) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+    memref.assume_alignment %0, 64 : memref<512x256xf32>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+    memref.assume_alignment %1, 64 : memref<256x1024xf32>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+    memref.assume_alignment %2, 64 : memref<512x1024xf32>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+    %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    scf.for %arg0 = %c0 to %c256 step %c32 {
+      %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %7 = gpu.thread_id  x
+      %8 = gpu.thread_id  y
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+      %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+      %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+      %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+    }
+    return
+  }
+}
+
+// -----// IR Dump After GPUReduceBankConflicts (iree-gpu-reduce-bank-conflicts) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+  memref.assume_alignment %0, 64 : memref<512x256xf32>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %7 = gpu.thread_id  x
+    %8 = gpu.thread_id  y
+    %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+    %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+    %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+    %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+    %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+    %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+    %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+  }
+  return
+}
+
+// -----// IR Dump After WorkGroupSwizzle (iree-workgroup-swizzle) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+  memref.assume_alignment %0, 64 : memref<512x256xf32>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %7 = gpu.thread_id  x
+    %8 = gpu.thread_id  y
+    %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+    %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+    %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+    %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+    %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+    %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+    %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+  }
+  return
+}
+
+// -----// IR Dump After Canonicalizer (canonicalize) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+    memref.assume_alignment %0, 64 : memref<512x256xf32>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+    memref.assume_alignment %1, 64 : memref<256x1024xf32>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+    memref.assume_alignment %2, 64 : memref<512x1024xf32>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+    %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    scf.for %arg0 = %c0 to %c256 step %c32 {
+      %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %7 = gpu.thread_id  x
+      %8 = gpu.thread_id  y
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+      %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+      %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+      %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+    }
+    return
+  }
+}
+
+// -----// IR Dump After CSE (cse) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+    memref.assume_alignment %0, 64 : memref<512x256xf32>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+    memref.assume_alignment %1, 64 : memref<256x1024xf32>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+    memref.assume_alignment %2, 64 : memref<512x1024xf32>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+    %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    scf.for %arg0 = %c0 to %c256 step %c32 {
+      %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %7 = gpu.thread_id  x
+      %8 = gpu.thread_id  y
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+      %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+      %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+      %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+    }
+    return
+  }
+}
+
+// -----// IR Dump After FoldMemRefAliasOps (fold-memref-alias-ops) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+  memref.assume_alignment %0, 64 : memref<512x256xf32>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %7 = gpu.thread_id  x
+    %8 = gpu.thread_id  y
+    %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+    %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+    %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+    %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+    %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+    %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+    %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+  }
+  return
+}
+
+// -----// IR Dump After CSE (cse) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+    memref.assume_alignment %0, 64 : memref<512x256xf32>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+    memref.assume_alignment %1, 64 : memref<256x1024xf32>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+    memref.assume_alignment %2, 64 : memref<512x1024xf32>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+    %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    scf.for %arg0 = %c0 to %c256 step %c32 {
+      %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %7 = gpu.thread_id  x
+      %8 = gpu.thread_id  y
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+      %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+      %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+      %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+    }
+    return
+  }
+}
+
+// -----// IR Dump After Canonicalizer (canonicalize) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+    memref.assume_alignment %0, 64 : memref<512x256xf32>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+    memref.assume_alignment %1, 64 : memref<256x1024xf32>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+    memref.assume_alignment %2, 64 : memref<512x1024xf32>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+    %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    scf.for %arg0 = %c0 to %c256 step %c32 {
+      %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %7 = gpu.thread_id  x
+      %8 = gpu.thread_id  y
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+      %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+      %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+      %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+    }
+    return
+  }
+}
+
+// -----// IR Dump After CSE (cse) //----- //
+module {
+  func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+    %c0 = arith.constant 0 : index
+    %c256 = arith.constant 256 : index
+    %c32 = arith.constant 32 : index
+    %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+    memref.assume_alignment %0, 64 : memref<512x256xf32>
+    %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+    memref.assume_alignment %1, 64 : memref<256x1024xf32>
+    %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+    memref.assume_alignment %2, 64 : memref<512x1024xf32>
+    %workgroup_id_x = hal.interface.workgroup.id[0] : index
+    %workgroup_id_y = hal.interface.workgroup.id[1] : index
+    %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+    %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+    %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+    %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+    %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+    %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+    scf.for %arg0 = %c0 to %c256 step %c32 {
+      %subview_2 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_3 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_4 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %7 = gpu.thread_id  x
+      %8 = gpu.thread_id  y
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+      %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+      %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+      %subview_5 = memref.subview %subview_2[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_6 = memref.subview %subview_3[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_7 = memref.subview %subview_4[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_8 = memref.subview %subview_5[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+      %subview_9 = memref.subview %subview_6[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_10 = memref.subview %subview_7[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_8, %subview_9 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_10 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+    }
+    return
+  }
+}
+
+// -----// IR Dump After OptimizeVectorTransfer (iree-codegen-optimize-vector-transfer) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+  memref.assume_alignment %0, 64 : memref<512x256xf32>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_2 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  %7 = gpu.thread_id  x
+  %8 = gpu.thread_id  y
+  %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+  %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+  %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+  %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+  %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+  %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+  %subview_3 = memref.subview %subview_2[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_4 = memref.subview %subview_3[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_5 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_6 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_7 = memref.subview %subview_5[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_8 = memref.subview %subview_6[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_9 = memref.subview %subview_7[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_10 = memref.subview %subview_8[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_9, %subview_10 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_4 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+  }
+  return
+}
+
+// -----// IR Dump After GPUPipelining (iree-gpu-pipelining) //----- //
+func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+  %c0 = arith.constant 0 : index
+  %c256 = arith.constant 256 : index
+  %c32 = arith.constant 32 : index
+  %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+  memref.assume_alignment %0, 64 : memref<512x256xf32>
+  %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+  memref.assume_alignment %1, 64 : memref<256x1024xf32>
+  %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+  memref.assume_alignment %2, 64 : memref<512x1024xf32>
+  %workgroup_id_x = hal.interface.workgroup.id[0] : index
+  %workgroup_id_y = hal.interface.workgroup.id[1] : index
+  %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+  %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+  %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+  %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+  %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+  %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_2 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  %7 = gpu.thread_id  x
+  %8 = gpu.thread_id  y
+  %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+  %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+  %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+  %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+  %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+  %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+  %subview_3 = memref.subview %subview_2[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  %subview_4 = memref.subview %subview_3[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+  scf.for %arg0 = %c0 to %c256 step %c32 {
+    %subview_5 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_6 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_7 = memref.subview %subview_5[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_8 = memref.subview %subview_6[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    %subview_9 = memref.subview %subview_7[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+    %subview_10 = memref.subview %subview_8[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+    linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_9, %subview_10 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_4 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+  }
+  return
+}
+
+// -----// IR Dump After LLVMGPULowerExecutableTarget (iree-llvmgpu-lower-executable-target) //----- //
+hal.executable.variant public @cuda_nvptx_fb, target = <"cuda", "cuda-nvptx-fb", {target_arch = "sm_70"}> {
+  hal.executable.export public @matmul_static_dispatch_0_matmul_512x1024x256 ordinal(0) layout(#hal.pipeline.layout<push_constants = 0, sets = [<0, bindings = [<0, storage_buffer, ReadOnly>, <1, storage_buffer, ReadOnly>, <2, storage_buffer>]>]>) attributes {translation_info = #iree_codegen.translation_info<LLVMGPUMatmulSimt>, workgroup_size = [32 : index, 8 : index, 1 : index]} {
+  ^bb0(%arg0: !hal.device, %arg1: index, %arg2: index, %arg3: index, %arg4: index, %arg5: index, %arg6: index, %arg7: index):
+    %c8 = arith.constant 8 : index
+    %c16 = arith.constant 16 : index
+    %c1 = arith.constant 1 : index
+    hal.return %c8, %c16, %c1 : index, index, index
+  }
+  builtin.module {
+    func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+      %c0 = arith.constant 0 : index
+      %c256 = arith.constant 256 : index
+      %c32 = arith.constant 32 : index
+      %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+      memref.assume_alignment %0, 64 : memref<512x256xf32>
+      %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+      memref.assume_alignment %1, 64 : memref<256x1024xf32>
+      %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+      memref.assume_alignment %2, 64 : memref<512x1024xf32>
+      %workgroup_id_x = hal.interface.workgroup.id[0] : index
+      %workgroup_id_y = hal.interface.workgroup.id[1] : index
+      %3 = affine.apply affine_map<()[s0] -> (s0 * 32)>()[%workgroup_id_y]
+      %4 = affine.min affine_map<()[s0] -> (s0 * -32 + 512, 32)>()[%workgroup_id_y]
+      %5 = affine.apply affine_map<()[s0] -> (s0 * 128)>()[%workgroup_id_x]
+      %6 = affine.min affine_map<()[s0] -> (s0 * -128 + 1024, 128)>()[%workgroup_id_x]
+      %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+      %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_2 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %7 = gpu.thread_id  x
+      %8 = gpu.thread_id  y
+      %9 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>(%8)[%4]
+      %10 = affine.max affine_map<(d0) -> (0, d0)>(%9)
+      %11 = affine.min affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>(%7)[%6]
+      %12 = affine.max affine_map<(d0) -> (0, d0)>(%11)
+      %13 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>(%8)[%4]
+      %14 = affine.apply affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>(%7)[%6]
+      %subview_3 = memref.subview %subview_2[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      %subview_4 = memref.subview %subview_3[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+      scf.for %arg0 = %c0 to %c256 step %c32 {
+        %subview_5 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+        %subview_6 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+        %subview_7 = memref.subview %subview_5[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+        %subview_8 = memref.subview %subview_6[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+        %subview_9 = memref.subview %subview_7[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+        %subview_10 = memref.subview %subview_8[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+        linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>} ins(%subview_9, %subview_10 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_4 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+      }
+      return
+    }
+  }
+}
+
+#config = #iree_codegen.lowering_config<tile_sizes = [[32, 128, 32]]>
+#executable_target_cuda_nvptx_fb = #hal.executable.target<"cuda", "cuda-nvptx-fb", {target_arch = "sm_70"}>
+#map = affine_map<()[s0] -> (s0 * 32)>
+#map1 = affine_map<()[s0] -> (s0 * -32 + 512, 32)>
+#map2 = affine_map<()[s0] -> (s0 * 128)>
+#map3 = affine_map<()[s0] -> (s0 * -128 + 1024, 128)>
+#map4 = affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 8)) + s0, s0 ceildiv 8)>
+#map5 = affine_map<(d0) -> (0, d0)>
+#map6 = affine_map<(d0)[s0] -> (-(d0 * (s0 ceildiv 32)) + s0, s0 ceildiv 32)>
+#map7 = affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 8))>
+#map8 = affine_map<(d0)[s0] -> (d0 * (s0 ceildiv 32))>
+#pipeline_layout = #hal.pipeline.layout<push_constants = 0, sets = [<0, bindings = [<0, storage_buffer, ReadOnly>, <1, storage_buffer, ReadOnly>, <2, storage_buffer>]>]>
+#translation = #iree_codegen.translation_info<LLVMGPUMatmulSimt>
+#device_target_cuda = #hal.device.target<"cuda", {executable_targets = [#executable_target_cuda_nvptx_fb]}>
+module attributes {hal.device.targets = [#device_target_cuda]} {
+  hal.executable private @matmul_static_dispatch_0_matmul_512x1024x256 {
+    hal.executable.variant public @cuda_nvptx_fb, target = #executable_target_cuda_nvptx_fb {
+      hal.executable.export public @matmul_static_dispatch_0_matmul_512x1024x256 ordinal(0) layout(#pipeline_layout) attributes {translation_info = #translation, workgroup_size = [32 : index, 8 : index, 1 : index]} {
+      ^bb0(%arg0: !hal.device, %arg1: index, %arg2: index, %arg3: index, %arg4: index, %arg5: index, %arg6: index, %arg7: index):
+        %c8 = arith.constant 8 : index
+        %c16 = arith.constant 16 : index
+        %c1 = arith.constant 1 : index
+        hal.return %c8, %c16, %c1 : index, index, index
+      }
+      builtin.module {
+        func.func @matmul_static_dispatch_0_matmul_512x1024x256() {
+          %c0 = arith.constant 0 : index
+          %c256 = arith.constant 256 : index
+          %c32 = arith.constant 32 : index
+          %0 = hal.interface.binding.subspan set(0) binding(0) type(storage_buffer) offset(%c0) alignment(64) : memref<512x256xf32>
+          memref.assume_alignment %0, 64 : memref<512x256xf32>
+          %1 = hal.interface.binding.subspan set(0) binding(1) type(storage_buffer) offset(%c0) alignment(64) : memref<256x1024xf32>
+          memref.assume_alignment %1, 64 : memref<256x1024xf32>
+          %2 = hal.interface.binding.subspan set(0) binding(2) type(storage_buffer) offset(%c0) alignment(64) : memref<512x1024xf32>
+          memref.assume_alignment %2, 64 : memref<512x1024xf32>
+          %workgroup_id_x = hal.interface.workgroup.id[0] : index
+          %workgroup_id_y = hal.interface.workgroup.id[1] : index
+          %3 = affine.apply #map()[%workgroup_id_y]
+          %4 = affine.min #map1()[%workgroup_id_y]
+          %5 = affine.apply #map2()[%workgroup_id_x]
+          %6 = affine.min #map3()[%workgroup_id_x]
+          %subview = memref.subview %0[%3, 0] [%4, 256] [1, 1] : memref<512x256xf32> to memref<?x256xf32, strided<[256, 1], offset: ?>>
+          %subview_0 = memref.subview %1[0, %5] [256, %6] [1, 1] : memref<256x1024xf32> to memref<256x?xf32, strided<[1024, 1], offset: ?>>
+          %subview_1 = memref.subview %2[%3, %5] [%4, %6] [1, 1] : memref<512x1024xf32> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+          %subview_2 = memref.subview %subview_1[0, 0] [%4, %6] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+          %7 = gpu.thread_id  x
+          %8 = gpu.thread_id  y
+          %9 = affine.min #map4(%8)[%4]
+          %10 = affine.max #map5(%9)
+          %11 = affine.min #map6(%7)[%6]
+          %12 = affine.max #map5(%11)
+          %13 = affine.apply #map7(%8)[%4]
+          %14 = affine.apply #map8(%7)[%6]
+          %subview_3 = memref.subview %subview_2[%13, %14] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+          %subview_4 = memref.subview %subview_3[0, 0] [%10, %12] [1, 1] : memref<?x?xf32, strided<[1024, 1], offset: ?>> to memref<?x?xf32, strided<[1024, 1], offset: ?>>
+          scf.for %arg0 = %c0 to %c256 step %c32 {
+            %subview_5 = memref.subview %subview[0, %arg0] [%4, 32] [1, 1] : memref<?x256xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+            %subview_6 = memref.subview %subview_0[%arg0, 0] [32, %6] [1, 1] : memref<256x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+            %subview_7 = memref.subview %subview_5[%13, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+            %subview_8 = memref.subview %subview_6[0, %14] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+            %subview_9 = memref.subview %subview_7[0, 0] [%10, 32] [1, 1] : memref<?x32xf32, strided<[256, 1], offset: ?>> to memref<?x32xf32, strided<[256, 1], offset: ?>>
+            %subview_10 = memref.subview %subview_8[0, 0] [32, %12] [1, 1] : memref<32x?xf32, strided<[1024, 1], offset: ?>> to memref<32x?xf32, strided<[1024, 1], offset: ?>>
+            linalg.matmul {__internal_linalg_transform__ = "workgroup_k_tiled", lowering_config = #config} ins(%subview_9, %subview_10 : memref<?x32xf32, strided<[256, 1], offset: ?>>, memref<32x?xf32, strided<[1024, 1], offset: ?>>) outs(%subview_4 : memref<?x?xf32, strided<[1024, 1], offset: ?>>)
+          }
+          return
+        }
+      }
+    }
+  }
+}
+
