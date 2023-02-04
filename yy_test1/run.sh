@@ -28,3 +28,4 @@ $IREE_OPT mttkrp.tmp.hal.mlir --pass-pipeline='builtin.module(hal.executable(hal
 #   --iree-codegen-yufan-ana \
 #   --mlir-disable-threading  2>&1 | tee $2
 
+has

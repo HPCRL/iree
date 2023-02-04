@@ -11,5 +11,5 @@
 #include "iree/compiler/API2/ToolEntryPoints.h"
 #include <iostream>
 int main(int argc, char **argv) { 
-    std::cout << "//----> Yufan woof woof ----->" << std::endl;
+    //std::cout << "//----> Yufan woof woof ----->" << std::endl;
     return ireeOptRunMain(argc, argv); }

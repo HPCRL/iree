@@ -24,3 +24,4 @@ func.func @matmul_static(
                      outs(%C : !C_size) -> !C_size
   return %0 : !C_size
 }
+

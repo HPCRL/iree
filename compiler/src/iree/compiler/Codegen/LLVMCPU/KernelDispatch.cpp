@@ -821,6 +821,7 @@ static void getDefaultMatmulWorkgroupSizes(linalg::LinalgOp op,
   auto targetAttr = IREE::HAL::ExecutableTargetAttr::lookup(op);
   if (isX86(targetAttr)) {
     sizes.append({8, 32, 16});
+    //sizes.append({4, 64, 2});
     return;
   }
 

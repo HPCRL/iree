@@ -1,4 +1,18 @@
 //----> Yufan woof woof ----->
+Yufan:: [TileAndDistributeToWorkgroupsPass] 
+Yufan:: [TileAndDistributeToWorkgroupsPass] tiledLoops.empty() 1
+Yufan:: Again [TileAndDistributeToWorkgroupsPass] tiledLoops.empty() 0
+ts 4
+32
+32
+0
+0
+Yufan:: tiled Loop scf.for
+Yufan:: tiled Loop info scf.for
+Yufan:: tiled size 32
+Yufan:: tiled Loop scf.for
+Yufan:: tiled Loop info scf.for
+Yufan:: tiled size 32
 #config = #iree_codegen.lowering_config<tile_sizes = [[32, 32, 0, 0], [1, 4, 0, 0], [0, 0, 1, 4]]>
 #executable_target_embedded_elf_x86_64_ = #hal.executable.target<"llvm-cpu", "embedded-elf-x86_64", {cpu = "generic", cpu_features = "", data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128", native_vector_size = 16 : index, target_triple = "x86_64-unknown-unknown-eabi-elf"}>
 #map = affine_map<()[s0] -> (s0 * 32)>
