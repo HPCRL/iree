@@ -365,6 +365,8 @@ struct FusionOfTensorOpsPass
       }
     }
   }
+
+  
 };
 
 }  // namespace

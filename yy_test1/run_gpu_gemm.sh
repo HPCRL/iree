@@ -19,12 +19,12 @@ IREE_CMP=/home/yufan/iree/iree-build/tools/iree-compile
 #     --mlir-print-ir-after-all \
 #     -o gpu.mm.vmfb 2>&1 | tee gpu_two_mm_fullir.log.txt
 
-$IREE_CMP mhlo.two.add.mlir \
+$IREE_CMP mhlo.two.add.mlir -debug-only=greedy-rewriter \
     --iree-hal-target-backends=cuda \
     --iree-input-type=mhlo \
     --iree-hal-cuda-llvm-target-arch=sm_70 \
     --mlir-print-ir-after-all \
-    -o gpu.add.vmfb 2>&1 | tee gpu_two_add_fullir.log.txt
+    -o gpu.add.vmfb 2>&1 | tee debug_gpu_two_add_fullir.log.txt
 
 
 

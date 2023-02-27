@@ -28,7 +28,7 @@
 #include "mlir/Transforms/GreedyPatternRewriteDriver.h"
 #include "mlir/Transforms/LoopInvariantCodeMotionUtils.h"
 #include "mlir/Transforms/Passes.h"
-
+#include "iostream"
 using namespace mlir;
 
 namespace mlir {
@@ -229,6 +229,8 @@ SCFTileAndFusePattern::matchAndRewrite(TilingInterface rootOp,
                                        PatternRewriter &rewriter) const {
   if (failed(filter.checkAndNotify(rewriter, rootOp)))
     return failure();
+
+  std::cout<< "Yufan:: SCFTileAndFusePattern::matchAndRewrite " << std::endl;
 
   // Collect list of operations that can be tiled and fused.
   llvm::SmallDenseSet<Operation *> origTiledAndFusedOps =
