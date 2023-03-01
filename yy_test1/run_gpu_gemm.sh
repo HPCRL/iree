@@ -10,21 +10,31 @@ IREE_CMP=/home/yufan/iree/iree-build/tools/iree-compile
 #     --mlir-disable-threading  
 
 
+# ### compile 
+# $IREE_CMP mhlo.mm.activate.mlir \
+#   --iree-hal-target-backends=llvm-cpu \
+#   --output-format=vm-bytecode \
+#   --iree-input-type=mhlo \
+#   --mlir-print-ir-after-all \
+#   --mlir-disable-threading  -o  mhlo.mm.activate.vmfb 2>&1 | tee  mhlo.mm.activate.log.txt
 
 
-# $IREE_CMP mhlo.two.mm.mlir \
+
+
+$IREE_CMP mhlo.two.mm.mlir \
+  --iree-hal-target-backends=llvm-cpu \
+  --output-format=vm-bytecode \
+  --iree-input-type=mhlo \
+  --mlir-print-ir-after-all \
+  --mlir-disable-threading  \
+    -o llvmcpu.mm.vmfb 2>&1 | tee llvmcpu_two_mm_fullir.log.txt
+
+# $IREE_CMP mhlo.two.add.mlir -debug-only=greedy-rewriter \
 #     --iree-hal-target-backends=cuda \
 #     --iree-input-type=mhlo \
 #     --iree-hal-cuda-llvm-target-arch=sm_70 \
 #     --mlir-print-ir-after-all \
-#     -o gpu.mm.vmfb 2>&1 | tee gpu_two_mm_fullir.log.txt
-
-$IREE_CMP mhlo.two.add.mlir -debug-only=greedy-rewriter \
-    --iree-hal-target-backends=cuda \
-    --iree-input-type=mhlo \
-    --iree-hal-cuda-llvm-target-arch=sm_70 \
-    --mlir-print-ir-after-all \
-    -o gpu.add.vmfb 2>&1 | tee debug_gpu_two_add_fullir.log.txt
+#     -o gpu.add.vmfb 2>&1 | tee debug_gpu_two_add_fullir.log.txt
 
 
 

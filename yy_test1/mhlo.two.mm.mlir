@@ -1,5 +1,3 @@
-
-
 !A_size = tensor<512x256xf32>
 !B_size = tensor<256x512xf32>
 !intmed1_size = tensor<512x512xf32>
@@ -17,3 +15,4 @@ func.func @twomatmul_static(
   
   return %Out : !Out_size
 }
+

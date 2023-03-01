@@ -26,6 +26,8 @@
 #include "mlir/Interfaces/TilingInterface.h"
 #include "mlir/Transforms/TopologicalSortUtils.h"
 
+#include <iostream>
+
 #define DEBUG_TYPE "tile-dispatch-using-interface"
 
 namespace mlir {
@@ -461,6 +463,9 @@ static SmallVector<tensor::ExtractSliceOp> getAllFusableProducerUses(
 FailureOr<TileAndFuseResult> tileAndFuseDispatchUsingSCFForOp(
     TilingInterface op, linalg::LinalgTilingOptions tilingOptions,
     PatternRewriter &rewriter) {
+  std::cout<< "Yufan:: tileAndFuseDispatchUsingSCFForOp::   " << std::endl;
+  op.dump();
+
   TileAndFuseResult tileAndFuseResult;
   auto fusableProducers = getAllFusableProducers(op);
   // Apply the tiling pattern.
@@ -481,6 +486,9 @@ FailureOr<TileAndFuseResult> tileAndFuseDispatchUsingSCFForOp(
   auto fusableProducersRef = llvm::ArrayRef(fusableProducers);
   while (!fusableProducersRef.empty()) {
     auto fusableProducer = cast<TilingInterface>(fusableProducersRef.back());
+    std::cout<< "Yufan:: fusableProducer::   " << std::endl;
+    fusableProducer.dump();
+
     fusableProducersRef = fusableProducersRef.drop_back();
 
     // Find a slice that is used to access the producer. Get all the slice ops.

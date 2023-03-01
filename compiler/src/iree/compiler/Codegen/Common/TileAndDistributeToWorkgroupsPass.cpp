@@ -402,6 +402,10 @@ void TileAndDistributeToWorkgroupsPass::runOnOperation() {
           }));
     };
 
+    llvm::dbgs() << "@@@@@@--- Before Tile + Distribute ---\n";
+    funcOp.print(llvm::dbgs(), OpPrintingFlags().useLocalScope());
+    llvm::dbgs() << "\n\n";
+
     auto linalgTilingOptions =
         linalg::LinalgTilingOptions()
             .setDistributionOptions(
@@ -437,6 +441,10 @@ void TileAndDistributeToWorkgroupsPass::runOnOperation() {
       funcOp.print(llvm::dbgs(), OpPrintingFlags().useLocalScope());
       llvm::dbgs() << "\n\n";
     });
+
+    llvm::dbgs() << "@@@@@@--- After Tile + Distribute ---\n";
+    funcOp.print(llvm::dbgs(), OpPrintingFlags().useLocalScope());
+    llvm::dbgs() << "\n\n";
 
     {
       // Apply linalg tiling optimization patterns, which includes folding

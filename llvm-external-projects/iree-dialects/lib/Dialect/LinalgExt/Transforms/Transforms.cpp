@@ -231,10 +231,11 @@ SCFTileAndFusePattern::matchAndRewrite(TilingInterface rootOp,
     return failure();
 
   std::cout<< "Yufan:: SCFTileAndFusePattern::matchAndRewrite " << std::endl;
-
   // Collect list of operations that can be tiled and fused.
   llvm::SmallDenseSet<Operation *> origTiledAndFusedOps =
       collectTiledAndFusedOps(rootOp);
+  
+  
   auto isIgnoredUser = [&](Operation *user, scf::ForOp outerMostTiledLoop) {
     return origTiledAndFusedOps.count(user) || isa<tensor::DimOp>(user) ||
            outerMostTiledLoop->isAncestor(user);
@@ -247,6 +248,9 @@ SCFTileAndFusePattern::matchAndRewrite(TilingInterface rootOp,
   // 1. Tile the consumer.
   SmallVector<OpResult> yieldedValuesToOrigValues;
   SmallVector<Operation *> tiledOps;
+
+
+
   FailureOr<scf::SCFTilingResult> tilingResult =
       scf::tileUsingSCFForOp(rewriter, rootOp, options);
   if (failed(tilingResult)) {
@@ -256,6 +260,12 @@ SCFTileAndFusePattern::matchAndRewrite(TilingInterface rootOp,
                                    rootOp->result_end());
   tiledOps.append(tilingResult->tiledOps);
 
+  for (auto op : tiledOps){
+    std::cout<< " tiledOps " << op->getName().getStringRef().data()  << std::endl;
+    op->dump();
+  }
+  std::cout<< "Yufan:: ??  " << std::endl;
+
   // 2. Tiling each operation results in generation of slices. The source of
   // these slices could be producers that can be fused into the tiled loops by
   // computing the slices of these producers in-place. This results in more
@@ -264,11 +274,15 @@ SCFTileAndFusePattern::matchAndRewrite(TilingInterface rootOp,
   auto addCandidateSlices = [](Operation *fusedOp,
                                std::deque<tensor::ExtractSliceOp> &candidates) {
     for (Value operand : fusedOp->getOperands())
-      if (auto sliceOp = operand.getDefiningOp<tensor::ExtractSliceOp>())
+      if (auto sliceOp = operand.getDefiningOp<tensor::ExtractSliceOp>()){
         candidates.push_back(sliceOp);
+        std::cout<< "slice operand -->" << sliceOp << std::endl;
+        sliceOp.dump();
+      }
   };
 
   std::deque<tensor::ExtractSliceOp> candidates;
+
   addCandidateSlices(tilingResult->tiledOps.back(), candidates);
   OpBuilder::InsertionGuard g(rewriter);
   while (!candidates.empty()) {
@@ -303,6 +317,7 @@ SCFTileAndFusePattern::matchAndRewrite(TilingInterface rootOp,
     }
   }
 
+
   scf::ForOp outermostLoop = tilingResult->loops.front();
   for (auto [index, origVal] : llvm::enumerate(yieldedValuesToOrigValues)) {
     Value replacement = outermostLoop.getResult(index);
@@ -311,9 +326,13 @@ SCFTileAndFusePattern::matchAndRewrite(TilingInterface rootOp,
     });
   }
   for (auto tiledOp : tiledOps) {
+    std::cout<< "tiledOp " << tiledOp->getName().getStringRef().data()  << std::endl;
+    tiledOp->dump();
     filter.replaceLinalgTransformationFilter(rewriter, tiledOp);
   }
   for (auto origOp : origTiledAndFusedOps) {
+    std::cout<< "origOp " << origOp->getName().getStringRef().data()  << std::endl;
+    origOp->dump();
     filter.replaceLinalgTransformationFilter(rewriter, origOp);
   }
   return success();
